@@ -1,0 +1,89 @@
+############################
+# Build / Compilação
+############################
+# Ignora binários e artefatos de compilação em qualquer pasta
+**/bin/
+**/obj/
+**/out/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+
+############################
+# IDEs (Visual Studio / VS Code)
+############################
+# Visual Studio
+.vs/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+############################
+# Usuário / Ambiente local
+############################
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+############################
+# Pacotes NuGet
+############################
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+*.nuget.props
+*.nuget.targets
+
+############################
+# Saídas de compilação / Binários
+############################
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+############################
+# Sistema Operacional
+############################
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+############################
+# Outros opcionais
+############################
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Backups
+*.bak
+*.old
+*.orig
+
+############################
+# Docker / Ambiente Local
+############################
+# Arquivo .env com segredos locais (manter .env.template versionado)
+.env
+
+############################
+# Segredos do k8s
+############################
+# Ignorar segredos reais (manter secret.template.yaml versionado)
+**/secret.yaml
+k8s/secret.yaml
+k8s/*-secret.yaml
