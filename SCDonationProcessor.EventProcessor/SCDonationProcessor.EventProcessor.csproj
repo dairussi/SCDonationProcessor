@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\Application.csproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+    <ProjectReference Include="..\SCDonationProcessor.Application\SCDonationProcessor.Application.csproj" />
+    <ProjectReference Include="..\SCDonationProcessor.Infrastructure\SCDonationProcessor.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
