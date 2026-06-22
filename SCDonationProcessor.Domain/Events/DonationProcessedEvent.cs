@@ -1,3 +1,5 @@
+using Domain.Enums;
+
 namespace Domain.Events;
 
 public class DonationProcessedEvent
@@ -6,6 +8,6 @@ public class DonationProcessedEvent
     public Guid CampaignId { get; init; }
     public int DonorId { get; init; }
     public decimal Amount { get; init; }
-    public string Status { get; init; } = string.Empty;
+    public DonationStatus Status { get; init; }
     public DateTime ProcessedAt { get; init; }
 }
