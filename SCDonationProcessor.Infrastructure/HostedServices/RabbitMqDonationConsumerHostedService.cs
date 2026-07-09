@@ -5,8 +5,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OpenTelemetry;
+using OpenTelemetry.Context.Propagation;
+using Prometheus;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System.Diagnostics;
+using System.Diagnostics.Metrics;
 using System.Text;
 using System.Text.Json;
 
@@ -14,6 +19,16 @@ namespace Infrastructure.HostedServices;
 
 public sealed class RabbitMqDonationConsumerHostedService : BackgroundService
 {
+    private static readonly ActivitySource ActivitySource = new("SolidarityConnection.Worker");
+    private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
+
+    // Contador Prometheus: quantas mensagens foram processadas e com qual resultado
+    private static readonly Counter MessagesProcessed = Metrics
+        .CreateCounter(
+            "worker_messages_processed_total",
+            "Total de mensagens processadas pelo worker",
+            labelNames: new[] { "status" });
+
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly ILogger<RabbitMqDonationConsumerHostedService> _logger;
     private readonly RabbitMqOptions _rabbitMqOptions;
@@ -100,6 +115,24 @@ public sealed class RabbitMqDonationConsumerHostedService : BackgroundService
     {
         ArgumentNullException.ThrowIfNull(_channel);
 
+        // Extrai o traceparent dos headers da mensagem RabbitMQ
+        // Isso conecta este span ao trace iniciado na API
+        var parentContext = Propagator.Extract(
+            default,
+            eventArgs.BasicProperties.Headers,
+            ExtractTraceContext);
+
+        Baggage.Current = parentContext.Baggage;
+
+        using var activity = ActivitySource.StartActivity(
+            $"{_rabbitMqOptions.DonationReceivedQueue} process",
+            ActivityKind.Consumer,
+            parentContext.ActivityContext);
+
+        activity?.SetTag("messaging.system", "rabbitmq");
+        activity?.SetTag("messaging.destination", _rabbitMqOptions.DonationReceivedQueue);
+        activity?.SetTag("messaging.operation", "process");
+
         try
         {
             var payload = Encoding.UTF8.GetString(eventArgs.Body.ToArray());
@@ -113,15 +146,24 @@ public sealed class RabbitMqDonationConsumerHostedService : BackgroundService
                     "Mensagem recebida na fila {QueueName} nao pode ser desserializada.",
                     _rabbitMqOptions.DonationReceivedQueue);
 
+                activity?.SetTag("error", true);
+                activity?.SetTag("error.reason", "deserialization_failed");
+
+                MessagesProcessed.WithLabels("deserialization_failed").Inc();
                 _channel.BasicReject(eventArgs.DeliveryTag, requeue: false);
                 return;
             }
+
+            activity?.SetTag("donation.id", donationEvent.DonationId.ToString());
+            activity?.SetTag("donation.campaign_id", donationEvent.CampaignId.ToString());
+            activity?.SetTag("donation.amount", donationEvent.Amount.ToString());
 
             using var scope = _serviceScopeFactory.CreateScope();
             var consumer = scope.ServiceProvider.GetRequiredService<DonationReceivedConsumer>();
 
             await consumer.ConsumeAsync(donationEvent, CancellationToken.None);
 
+            MessagesProcessed.WithLabels("success").Inc();
             _channel.BasicAck(eventArgs.DeliveryTag, multiple: false);
         }
         catch (Exception ex)
@@ -131,8 +173,26 @@ public sealed class RabbitMqDonationConsumerHostedService : BackgroundService
                 "Erro ao processar mensagem da fila {QueueName}. A mensagem sera reenfileirada.",
                 _rabbitMqOptions.DonationReceivedQueue);
 
+            activity?.SetTag("error", true);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            MessagesProcessed.WithLabels("error").Inc();
             _channel.BasicNack(eventArgs.DeliveryTag, multiple: false, requeue: true);
         }
+    }
+
+    // Extrai o valor do header traceparent dos headers AMQP
+    // Os headers RabbitMQ armazenam valores como byte[] — precisamos converter para string
+    private static IEnumerable<string> ExtractTraceContext(
+        IDictionary<string, object>? headers,
+        string key)
+    {
+        if (headers is null || !headers.TryGetValue(key, out var value))
+            return Enumerable.Empty<string>();
+
+        return value is byte[] bytes
+            ? new[] { Encoding.UTF8.GetString(bytes) }
+            : Enumerable.Empty<string>();
     }
 
     private void InitializeRabbitMq()
