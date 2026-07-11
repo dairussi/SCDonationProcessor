@@ -19,7 +19,7 @@ namespace Infrastructure.HostedServices;
 
 public sealed class RabbitMqDonationConsumerHostedService : BackgroundService
 {
-    private static readonly ActivitySource ActivitySource = new("SolidarityConnection.Worker");
+    private static readonly ActivitySource ActivitySource = new("SCDonationProcessor.Worker");
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
     // Contador Prometheus: quantas mensagens foram processadas e com qual resultado

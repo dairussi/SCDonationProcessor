@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sc-donation-processor-config
+  namespace: solidarity-connection-namespace
+data:
+  DOTNET_ENVIRONMENT: "Production"
+  RabbitMQ__Host: "solidarity-connection-rabbitmq.solidarity-connection-namespace.svc.cluster.local"
+  RabbitMQ__Port: "5672"
+  RabbitMQ__DonationReceivedQueue: "donation-received"
+  RabbitMQ__DonationProcessedQueue: "donation-processed"
+  Jaeger__OtlpEndpoint: "http://jaeger.observability.svc.cluster.local:4317"

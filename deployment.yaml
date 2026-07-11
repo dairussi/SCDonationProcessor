@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sc-donation-processor
+  namespace: solidarity-connection-namespace
+  labels:
+    app: sc-donation-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sc-donation-processor
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: sc-donation-processor
+    spec:
+      containers:
+        - name: sc-donation-processor
+          image: daiana2026dev/sc-donation-processor-image:latest
+          imagePullPolicy: Always
+          ports:
+            - name: metrics
+              containerPort: 9091
+          envFrom:
+            - configMapRef:
+                name: sc-donation-processor-config
+            - secretRef:
+                name: sc-donation-processor-secret
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: 9091
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 6
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: 9091
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 6
