@@ -18,6 +18,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCDonationProcessor.EventPr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SCDonationProcessor.Infrastructure", "SCDonationProcessor.Infrastructure\SCDonationProcessor.Infrastructure.csproj", "{AE1D1B9B-281A-3350-8629-B37C2E970848}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "k8s", "k8s", "{F6771BEC-6F61-4043-9020-48987C2EBF74}"
+	ProjectSection(SolutionItems) = preProject
+		configmap.yaml = configmap.yaml
+		deployment.yaml = deployment.yaml
+		namespace.yaml = namespace.yaml
+		secret-template.yaml = secret-template.yaml
+		service.yaml = service.yaml
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

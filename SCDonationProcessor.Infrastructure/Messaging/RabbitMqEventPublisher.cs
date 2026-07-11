@@ -13,7 +13,7 @@ namespace Infrastructure.Messaging;
 
 public sealed class RabbitMqEventPublisher : IEventPublisher, IDisposable
 {
-    private static readonly ActivitySource ActivitySource = new("SolidarityConnection.Worker");
+    private static readonly ActivitySource ActivitySource = new("SCDonationProcessor.Worker");
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
     private readonly IConnection _connection;

@@ -14,14 +14,14 @@ builder.Services.AddInfrastructure(builder.Configuration);
 DotNetRuntimeStatsBuilder.Customize().StartCollecting();
 
 // OpenTelemetry — tracing distribuído
-const string serviceName = "SolidarityConnection.Worker";
+const string serviceName = "SCDonationProcessor.Worker";
 
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(resource => resource.AddService(serviceName))
     .WithTracing(tracing =>
     {
         tracing
-            .AddSource("SolidarityConnection.Worker")
+            .AddSource(serviceName)
             .AddOtlpExporter(options =>
             {
                 options.Endpoint = new Uri(
