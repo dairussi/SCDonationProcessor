@@ -26,7 +26,14 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore ./SCDonationProcessor.sln
+        run: dotnet restore ./SCDonationProcessor.sln --verbosity detailed
+
+      - name: Diagnóstico - verificar RabbitMQ.Client restaurado
+        run: |
+          echo "--- Procurando RabbitMQ.Client no cache do NuGet ---"
+          find ~/.nuget/packages -iname "*rabbitmq*" || echo "NÃO ENCONTRADO no cache do NuGet"
+          echo "--- Conteúdo do project.assets.json (Infrastructure) ---"
+          grep -i "rabbitmq" ./SCDonationProcessor.Infrastructure/obj/project.assets.json || echo "RabbitMQ.Client NÃO aparece no assets.json"
 
       - name: Build
         run: dotnet build ./SCDonationProcessor.sln --configuration Release --no-restore
