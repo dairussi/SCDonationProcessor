@@ -26,14 +26,27 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore ./SCDonationProcessor.sln --verbosity detailed
+        run: dotnet restore ./SCDonationProcessor.sln --configuration Release --verbosity detailed | tee restore.log
 
-      - name: Diagnóstico - verificar RabbitMQ.Client restaurado
+      - name: Diagnóstico completo do NuGet
         run: |
-          echo "--- Procurando RabbitMQ.Client no cache do NuGet ---"
-          find ~/.nuget/packages -iname "*rabbitmq*" || echo "NÃO ENCONTRADO no cache do NuGet"
-          echo "--- Conteúdo do project.assets.json (Infrastructure) ---"
-          grep -i "rabbitmq" ./SCDonationProcessor.Infrastructure/obj/project.assets.json || echo "RabbitMQ.Client NÃO aparece no assets.json"
+          echo "=== Variáveis de ambiente NUGET_* ==="
+          env | grep -i nuget || echo "(nenhuma variável NUGET_* definida)"
+
+          echo "=== Pastas de cache configuradas pelo NuGet ==="
+          dotnet nuget locals all --list
+
+          echo "=== obj/ do projeto Infrastructure existe? ==="
+          ls -la ./SCDonationProcessor.Infrastructure/obj/ 2>/dev/null || echo "pasta obj NÃO existe"
+
+          echo "=== project.assets.json existe? ==="
+          test -f ./SCDonationProcessor.Infrastructure/obj/project.assets.json && echo "existe" || echo "NÃO existe"
+
+          echo "=== Quantos pacotes o restore.log diz ter restaurado? ==="
+          grep -ci "restored " restore.log || echo "0 linhas 'Restored' encontradas"
+
+          echo "=== Linhas do restore.log mencionando RabbitMQ ==="
+          grep -i "rabbitmq" restore.log || echo "Nenhuma menção a RabbitMQ no restore.log"
 
       - name: Build
         run: dotnet build ./SCDonationProcessor.sln --configuration Release --no-restore
